@@ -49,36 +49,35 @@ const Model = ({ mousePosition }) => {
   return <primitive object={scene} />;
 };
 
+// New component for camera movement
+const CameraController = ({ mousePosition }) => {
+  const { camera } = useThree();
+
+  useFrame(() => {
+    // Smooth camera movement based on mouse position
+    const targetX = mousePosition.x * 0.5; // Adjust these values to control movement range
+    const targetY = mousePosition.y * 0.5;
+    
+    // Smoothly interpolate camera position
+    camera.position.x += (targetX - camera.position.x) * 0.05;
+    camera.position.y += (targetY - camera.position.y) * 0.05;
+    
+    // Keep the camera looking at the center
+    camera.lookAt(0, 0, 0);
+  });
+
+  return null;
+};
+
 const Scene = () => {
   const [mousePosition, setMousePosition] = useState(new THREE.Vector2());
-  const cameraRef = useRef();
-  const targetPosition = useRef(new THREE.Vector3(0, 1, 2.5));
 
   const handleMouseMove = (event) => {
-    // Convert mouse position to normalized device coordinates (-1 to +1)
-    const x = (event.clientX / window.innerWidth) * 2 - 1;
-    const y = -(event.clientY / window.innerHeight) * 2 + 1;
-    
-    setMousePosition({ x, y });
-
-    // Calculate camera offset based on mouse position
-    // Multiply by 0.5 to make the movement more subtle
-    const offsetX = x * 0.5;
-    const offsetY = y * 0.3;
-    
-    // Update target position with smooth movement
-    targetPosition.current.set(offsetX, 1 + offsetY, 2.5);
+    setMousePosition({
+      x: (event.clientX / window.innerWidth) * 2 - 1,
+      y: -(event.clientY / window.innerHeight) * 2 + 1
+    });
   };
-
-  // Smooth camera movement
-  useFrame(() => {
-    if (cameraRef.current) {
-      // Smoothly interpolate camera position
-      cameraRef.current.position.lerp(targetPosition.current, 0.05);
-      // Make camera look at the center
-      cameraRef.current.lookAt(0, 1, 0);
-    }
-  });
 
   return (
     <Canvas
@@ -90,8 +89,8 @@ const Scene = () => {
       <directionalLight position={[0, 20, 20]} intensity={10} />
       <Suspense fallback={null}>
         <Model mousePosition={mousePosition} />
+        <CameraController mousePosition={mousePosition} />
       </Suspense>
-      <primitive ref={cameraRef} object={new THREE.Object3D()} />
     </Canvas>
   );
 };
